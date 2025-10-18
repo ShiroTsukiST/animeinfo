@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜尋結果 - 動畫資訊</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9; --text-color: #333; --text-color-subtle: #555; --card-bg: #fff; --header-bg: #fff;
+            --border-color: #ddd; --highlight-bg: #e7f1ff; --primary-color: #5b69e2; --primary-color-hover: #4a56c4;
+            --shadow-color: rgba(0,0,0,0.1); --footer-bg: #333; --footer-text: #fff; --footer-text-subtle: #ccc;
+            --subtle-text: #777;
+        }
+        body.dark-mode {
+            --bg-color: #1a1a1a; --text-color: #e0e0e0; --text-color-subtle: #bbb; --card-bg: #2c2c2c; --header-bg: #252525;
+            --border-color: #444; --highlight-bg: #2a3a5e; --primary-color: #7b8aff; --primary-color-hover: #6a79e2;
+            --shadow-color: rgba(0,0,0,0.4); --footer-bg: #222; --footer-text: #e0e0e0; --footer-text-subtle: #888;
+            --subtle-text: #999;
+        }
+        html { height: 100%; }
+        body { display: flex; flex-direction: column; min-height: 100%; font-family: Arial, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+        .content-wrapper { flex: 1; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .navbar { background-color: var(--header-bg); padding: 1rem 0; border-bottom: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; }
+        .navbar .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-color); text-decoration: none; }
+        .search-container { display: flex; }
+        .search-container input { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px 0 0 4px; border-right: none; min-width: 250px; background-color: var(--card-bg); color: var(--text-color); }
+        .search-container button { padding: 8px 12px; background-color: var(--primary-color); color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer; }
+        .main-nav { display: flex; align-items: center; }
+        .nav-link { margin-left: 15px; text-decoration: none; color: var(--text-color-subtle); white-space: nowrap; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-toggle { background: none; border: none; cursor: pointer; font-size: inherit; font-family: inherit; color: var(--text-color-subtle); }
+        .dropdown-menu { display: none; position: absolute; background-color: var(--card-bg); min-width: 200px; box-shadow: 0px 8px 16px 0px var(--shadow-color); z-index: 1; border-radius: 5px; padding: 5px 0; border: 1px solid var(--border-color); }
+        .dropdown-menu a { color: var(--text-color); padding: 12px 16px; text-decoration: none; display: block; }
+        .dropdown-menu a:hover { background-color: var(--bg-color); }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .site-footer { text-align: center; padding: 15px 20px; background-color: var(--footer-bg); color: var(--footer-text); }
+        .site-footer p { margin: 5px 0; }
+        .contact-info { font-size: 0.9em; color: var(--footer-text-subtle); }
+        main.container { opacity: 0; transition: opacity 0.5s ease-in-out; }
+        main.container.loaded { opacity: 1; }
+        .page-title-highlight { display: inline-block; padding: 5px 15px; background-color: var(--highlight-bg); color: var(--primary-color); border-left: 4px solid var(--primary-color); font-size: 1.8em; margin-bottom: 20px; }
+        .anime-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; }
+        .anime-card { display: block; text-decoration: none; color: var(--text-color); background-color: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 5px var(--shadow-color); overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s; }
+        .anime-card:hover { transform: translateY(-8px); box-shadow: 0 8px 20px var(--shadow-color); }
+        .anime-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+        .card-info { padding: 10px; min-height: 3.5em; display: flex; flex-direction: column; justify-content: center; }
+        .card-info h3 { margin: 0; font-size: 1rem; white-space: normal; overflow-wrap: break-word; }
+        .message { font-size: 1.2rem; color: var(--subtle-text); grid-column: 1 / -1; }
+        .theme-toggle { background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-left: 15px; padding: 5px; color: var(--text-color-subtle); }
+        .hamburger-btn, .close-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; cursor: pointer; color: var(--text-color-subtle); }
+        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0s 0.3s; }
+        .side-menu-overlay.is-open { opacity: 1; visibility: visible; transition: opacity 0.3s; }
+        @media (max-width: 992px) {
+            .navbar .container { flex-wrap: nowrap; justify-content: space-between; align-items: center; }
+            .search-container { display: flex; flex-grow: 1; margin: 0 15px; } /* 讓搜尋框在中間顯示 */
+            .hamburger-btn { display: block; order: -1; }
+            .main-nav { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background-color: var(--header-bg); flex-direction: column; align-items: flex-start; padding: 20px; box-shadow: 2px 0 15px rgba(0,0,0,0.2); transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 1001; }
+            .main-nav.is-open { transform: translateX(0); }
+            .nav-link, .theme-toggle, .dropdown { margin: 15px 0; width: 100%; }
+            .dropdown-toggle { text-align: left; width: 100%; padding: 0; }
+            .dropdown-menu { position: static; box-shadow: none; border: none; width: 100%; background-color: transparent; }
+            .close-menu-btn { display: block; position: absolute; top: 10px; right: 15px; font-size: 2.5rem; }
+        }
+        @media (max-width: 768px) { .anime-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 480px) { .anime-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; } .card-info h3 { font-size: 0.9rem; } }
+    </style>
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div class="content-wrapper">
+        <header class="navbar">
+            <div class="container">
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+                <a href="index.html" class="logo">動畫資訊</a>
+                <form action="search.html" method="get" class="search-container">
+                    <input type="text" name="q" placeholder="搜尋動畫..." required>
+                    <button type="submit">搜尋</button>
+                </form>
+                <nav class="main-nav" id="main-nav">
+                    <button class="close-menu-btn" id="close-menu-btn">&times;</button>
+                    <a href="hype.html" class="nav-link">新番期待度</a>
+                    <div class="dropdown">
+                        <button class="nav-link dropdown-toggle">新番動畫表 &#9662;</button>
+                        <div class="dropdown-menu">
+                            <a href="bangumi.html?season=2025-fall">2025年10月 (秋季新番)</a>
+                            <a href="bangumi.html?season=2026-winter">2026年1月 (冬季新番)</a>
+                        </div>
+                    </div>
+                    <button id="theme-toggle-btn" class="theme-toggle">🌙</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="container">
+            <h2 id="search-results-title" class="page-title-highlight">搜尋結果</h2>
+            <section id="search-grid-container" class="anime-grid"></section>
+        </main>
+    </div>
+    
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 動畫資訊網站. All Rights Reserved.</p>
+            <p class="contact-info">連絡方式：service@animesinfo.tw</p>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        if (document.body.classList.contains('dark-mode')) {
+            themeToggleBtn.textContent = '☀️';
+        } else {
+            themeToggleBtn.textContent = '🌙';
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.textContent = '🌙';
+            }
+        });
+
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mainNav = document.getElementById('main-nav');
+        const overlay = document.getElementById('side-menu-overlay');
+        function openMenu() {
+            mainNav.classList.add('is-open');
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            mainNav.classList.remove('is-open');
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+        hamburgerBtn.addEventListener('click', openMenu);
+        closeMenuBtn.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+
+        window.onload = function() {
+            document.querySelector('main.container').classList.add('loaded');
+            const params = new URLSearchParams(window.location.search);
+            const query = params.get('q');
+            
+            const titleElement = document.getElementById('search-results-title');
+            const gridContainer = document.getElementById('search-grid-container');
+
+            if (query) {
+                document.querySelector('input[name="q"]').value = query; // 將關鍵字填回搜尋框
+                titleElement.textContent = `搜尋 "${query}" 的結果`;
+                const results = [];
+                const lowerCaseQuery = query.toLowerCase();
+
+                for (const season in animeData) {
+                    animeData[season].forEach(anime => {
+                        if (anime.title.toLowerCase().includes(lowerCaseQuery) || (anime.originalTitle && anime.originalTitle.toLowerCase().includes(lowerCaseQuery))) {
+                            if (!results.some(r => r.id === anime.id)) {
+                                results.push(anime);
+                            }
+                        }
+                    });
+                }
+                if (results.length > 0) {
+                    results.forEach(anime => {
+                        const cardHTML = `
+                            <a href="anime-detail.html?id=${anime.id}" class="anime-card">
+                                <img src="${anime.image}" alt="${anime.title}">
+                                <div class="card-info">
+                                    <h3>${anime.title}</h3>
+                                </div>
+                            </a>
+                        `;
+                        gridContainer.innerHTML += cardHTML;
+                    });
+                } else {
+                    gridContainer.innerHTML = '<p class="message" style="color: var(--text-color-subtle);">找不到符合條件的動畫。</p>';
+                }
+            } else {
+                titleElement.textContent = '請輸入關鍵字進行搜尋';
+            }
+        };
+    </script>
+</body>
+</html>

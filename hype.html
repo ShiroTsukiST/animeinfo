@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新番期待度 - 動畫資訊</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9; --text-color: #333; --text-color-subtle: #555; --card-bg: #fff; --header-bg: #fff;
+            --border-color: #ddd; --primary-color: #5b69e2; --footer-bg: #333; --footer-text: #fff; --footer-text-subtle: #ccc;
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+        body.dark-mode {
+            --bg-color: #1a1a1a; --text-color: #e0e0e0; --text-color-subtle: #bbb; --card-bg: #2c2c2c; --header-bg: #252525;
+            --border-color: #444; --primary-color: #7b8aff; --footer-bg: #222; --footer-text: #e0e0e0; --footer-text-subtle: #888;
+            --shadow-color: rgba(0,0,0,0.4);
+        }
+        html { height: 100%; }
+        body { display: flex; flex-direction: column; min-height: 100%; font-family: Arial, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+        .content-wrapper { flex: 1; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .navbar { background-color: var(--header-bg); padding: 1rem 0; border-bottom: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; }
+        .navbar .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--text-color); text-decoration: none; }
+        .main-nav { display: flex; align-items: center; }
+        .nav-link { margin-left: 15px; text-decoration: none; color: var(--text-color-subtle); white-space: nowrap; }
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-toggle { background: none; border: none; cursor: pointer; font-size: inherit; font-family: inherit; color: var(--text-color-subtle); }
+        .dropdown-menu { display: none; position: absolute; background-color: var(--card-bg); min-width: 200px; box-shadow: 0px 8px 16px 0px var(--shadow-color); z-index: 1; border-radius: 5px; padding: 5px 0; border: 1px solid var(--border-color); }
+        .dropdown-menu a { color: var(--text-color); padding: 12px 16px; text-decoration: none; display: block; }
+        .dropdown-menu a:hover { background-color: var(--bg-color); }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .site-footer { text-align: center; padding: 15px 20px; background-color: var(--footer-bg); color: var(--footer-text); }
+        .site-footer p { margin: 5px 0; }
+        .contact-info { font-size: 0.9em; color: var(--footer-text-subtle); }
+        main.container { opacity: 0; transition: opacity 0.5s ease-in-out; }
+        main.container.loaded { opacity: 1; }
+        .form-header { text-align: center; margin-bottom: 30px; }
+        #anime-checkbox-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px var(--shadow-color); }
+        .checkbox-item { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid var(--border-color); }
+        .checkbox-item:last-child { border-bottom: none; }
+        .checkbox-item input[type="checkbox"] { transform: scale(1.3); margin-right: 15px; cursor: pointer; }
+        .checkbox-item label { font-size: 1rem; cursor: pointer; }
+        .form-actions { text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 20px; }
+        .action-btn { padding: 12px 25px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        .action-btn:hover { transform: translateY(-2px); }
+        .submit-btn { background-color: var(--primary-color); color: white; }
+        .clear-btn { background-color: #e63946; color: white; }
+        .theme-toggle { background: none; border: none; cursor: pointer; font-size: 1.2rem; margin-left: 15px; padding: 5px; color: var(--text-color-subtle); }
+        .hamburger-btn, .close-menu-btn { display: none; font-size: 1.8rem; background: none; border: none; cursor: pointer; color: var(--text-color-subtle); }
+        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0s 0.3s; }
+        .side-menu-overlay.is-open { opacity: 1; visibility: visible; transition: opacity 0.3s; }
+        @media (max-width: 992px) {
+            .navbar .container { flex-wrap: nowrap; justify-content: space-between; align-items: center; }
+            .search-container { display: none; }
+            .hamburger-btn { display: block; order: -1; margin-right: 10px; }
+            .main-nav { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background-color: var(--header-bg); flex-direction: column; align-items: flex-start; padding: 20px; box-shadow: 2px 0 15px rgba(0,0,0,0.2); transform: translateX(-100%); transition: transform 0.3s ease-in-out; z-index: 1001; }
+            .main-nav.is-open { transform: translateX(0); }
+            .nav-link, .theme-toggle, .dropdown { margin: 15px 0; width: 100%; }
+            .dropdown-toggle { text-align: left; width: 100%; padding: 0; }
+            .dropdown-menu { position: static; box-shadow: none; border: none; width: 100%; background-color: transparent; }
+            .close-menu-btn { display: block; position: absolute; top: 10px; right: 15px; font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    <div id="side-menu-overlay" class="side-menu-overlay"></div>
+    <div class="content-wrapper">
+        <header class="navbar">
+            <div class="container">
+                <button class="hamburger-btn" id="hamburger-btn">☰</button>
+                <a href="index.html" class="logo">動畫資訊</a>
+                <nav class="main-nav" id="main-nav">
+                    <button class="close-menu-btn" id="close-menu-btn">&times;</button>
+                    <a href="hype.html" class="nav-link">新番期待度</a>
+                    <div class="dropdown">
+                        <button class="nav-link dropdown-toggle">新番動畫表 &#9662;</button>
+                        <div class="dropdown-menu">
+                            <a href="bangumi.html?season=2025-fall">2025年10月 (秋季新番)</a>
+                            <a href="bangumi.html?season=2026-winter">2026年1月 (冬季新番)</a>
+                        </div>
+                    </div>
+                    <button id="theme-toggle-btn" class="theme-toggle">🌙</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="form-header">
+                <h1>新番期待度調查</h1>
+                <p>請選取您本季會追的新番動畫！</p>
+            </div>
+
+            <form id="hype-form">
+                <div id="anime-checkbox-list"></div>
+                <div class="form-actions">
+                    <button type="submit" class="action-btn submit-btn">提交</button>
+                    <button type="button" id="clear-btn" class="action-btn clear-btn">清除表單</button>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 動畫資訊網站. All Rights Reserved.</p>
+            <p class="contact-info">連絡方式：service@animesinfo.tw</p>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        if (document.body.classList.contains('dark-mode')) {
+            themeToggleBtn.textContent = '☀️';
+        } else {
+            themeToggleBtn.textContent = '🌙';
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggleBtn.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggleBtn.textContent = '🌙';
+            }
+        });
+
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mainNav = document.getElementById('main-nav');
+        const overlay = document.getElementById('side-menu-overlay');
+        function openMenu() {
+            mainNav.classList.add('is-open');
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            mainNav.classList.remove('is-open');
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+        hamburgerBtn.addEventListener('click', openMenu);
+        closeMenuBtn.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+
+        window.onload = function() {
+            document.querySelector('main.container').classList.add('loaded');
+            const checkboxList = document.getElementById('anime-checkbox-list');
+            const hypeForm = document.getElementById('hype-form');
+            const clearBtn = document.getElementById('clear-btn');
+            const pageTitle = document.querySelector('.form-header h1');
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            let seasonName = '';
+            if (month >= 1 && month <= 3) { seasonName = 'winter'; } 
+            else if (month >= 4 && month <= 6) { seasonName = 'spring'; } 
+            else if (month >= 7 && month <= 9) { seasonName = 'summer'; } 
+            else { seasonName = 'fall'; }
+            const seasonQuery = `${year}-${seasonName}`;
+            const currentSeasonData = animeData[seasonQuery] || [];
+            const seasonTitles = {
+                '2025-fall': '2025年 秋季新番 期待度調查',
+                '2026-winter': '2026年 冬季新番 期待度調查'
+            };
+            pageTitle.textContent = seasonTitles[seasonQuery] || '新番期待度調查';
+
+            let checkboxHTML = '';
+            if (currentSeasonData.length > 0) {
+                currentSeasonData.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hant'));
+                currentSeasonData.forEach(anime => {
+                    checkboxHTML += `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="${anime.id}" name="watchlist" value="${anime.title}">
+                            <label for="${anime.id}">${anime.title}</label>
+                        </div>
+                    `;
+                });
+            } else {
+                checkboxHTML = '<p style="text-align: center; color: var(--text-color-subtle);">本季新番資訊尚未更新。</p>';
+            }
+            checkboxList.innerHTML = checkboxHTML;
+            
+            clearBtn.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('input[name="watchlist"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            });
+
+            hypeForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const selectedTitles = [];
+                const checkedBoxes = document.querySelectorAll('input[name="watchlist"]:checked');
+                
+                checkedBoxes.forEach(checkbox => {
+                    selectedTitles.push(checkbox.value);
+                });
+
+                if (selectedTitles.length > 0) {
+                    alert('您提交的期待新番：\n\n- ' + selectedTitles.join('\n- '));
+                } else {
+                    alert('您尚未選取任何動畫！');
+                }
+            });
+        };
+    </script>
+</body>
+</html>

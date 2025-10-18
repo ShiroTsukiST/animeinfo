@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>動畫資訊 - 載入中...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>正在為您導向當季新番頁面...</h1>
+
+    <script>
+        function redirectToCurrentSeason() {
+            // 根據當前日期判斷季節
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1; // getMonth() 回傳 0-11，所以要 +1
+            let seasonName = '';
+
+            if (month >= 1 && month <= 3) {
+                seasonName = 'winter'; // 冬季
+            } else if (month >= 4 && month <= 6) {
+                seasonName = 'spring'; // 春季
+            } else if (month >= 7 && month <= 9) {
+                seasonName = 'summer'; // 夏季
+            } else if (month >= 10 && month <= 12) {
+                seasonName = 'fall';   // 秋季
+            }
+
+            // 組成目標網址，例如 "bangumi.html?season=2025-fall"
+            const targetUrl = `bangumi.html?season=${year}-${seasonName}`;
+
+            // 執行跳轉
+            window.location.href = targetUrl;
+        }
+
+        // 立即執行函式
+        redirectToCurrentSeason();
+    </script>
+    </body>
+</html>
